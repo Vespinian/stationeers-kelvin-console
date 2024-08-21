@@ -130,92 +130,89 @@ namespace ExamplePatchMod
 					{
 						____sensors = 0;
 						GasDisplayMode displayMode = __instance.DisplayMode;
-						if (displayMode != GasDisplayMode.Pressure)
+						if (displayMode == GasDisplayMode.Temperature)
 						{
-							if (displayMode == GasDisplayMode.Temperature)
+							____temperature = 0f;
+							int count = __instance.GasSensors.Count;
+							while (count-- > 0)
 							{
-								____temperature = 0f;
-								int count = __instance.GasSensors.Count;
-								while (count-- > 0)
+								GasSensor gasSensor = __instance.GasSensors[count];
+								if (gasSensor && __instance.ParentComputer != null && __instance.ParentComputer.DataCableNetwork != null && __instance.IsDeviceConnected(gasSensor) && gasSensor.AirTemperature >= 0f)
 								{
-									GasSensor gasSensor = __instance.GasSensors[count];
-									if (gasSensor && __instance.ParentComputer != null && __instance.ParentComputer.DataCableNetwork != null && __instance.IsDeviceConnected(gasSensor) && gasSensor.AirTemperature >= 0f)
-									{
-										____temperature += gasSensor.AirTemperature;
-										____sensors++;
-									}
+									____temperature += gasSensor.AirTemperature;
+									____sensors++;
 								}
-								int count2 = __instance.PipeAnalysizers.Count;
-								while (count2-- > 0)
+							}
+							int count2 = __instance.PipeAnalysizers.Count;
+							while (count2-- > 0)
+							{
+								PipeAnalysizer pipeAnalysizer = __instance.PipeAnalysizers[count2];
+								if (pipeAnalysizer && __instance.ParentComputer != null && __instance.ParentComputer.DataCableNetwork != null && __instance.IsDeviceConnected(pipeAnalysizer) && pipeAnalysizer.PipeTemperature >= 0f)
 								{
-									PipeAnalysizer pipeAnalysizer = __instance.PipeAnalysizers[count2];
-									if (pipeAnalysizer && __instance.ParentComputer != null && __instance.ParentComputer.DataCableNetwork != null && __instance.IsDeviceConnected(pipeAnalysizer) && pipeAnalysizer.PipeTemperature >= 0f)
-									{
-										____temperature += pipeAnalysizer.PipeTemperature;
-										____sensors++;
-									}
+									____temperature += pipeAnalysizer.PipeTemperature;
+									____sensors++;
 								}
-								int count3 = __instance.GasTankStorages.Count;
-								while (count3-- > 0)
+							}
+							int count3 = __instance.GasTankStorages.Count;
+							while (count3-- > 0)
+							{
+								GasTankStorage gasTankStorage = __instance.GasTankStorages[count3];
+								if (gasTankStorage && __instance.ParentComputer != null && __instance.ParentComputer.DataCableNetwork != null && __instance.IsDeviceConnected(gasTankStorage) && gasTankStorage.TankTemperature >= 0f)
 								{
-									GasTankStorage gasTankStorage = __instance.GasTankStorages[count3];
-									if (gasTankStorage && __instance.ParentComputer != null && __instance.ParentComputer.DataCableNetwork != null && __instance.IsDeviceConnected(gasTankStorage) && gasTankStorage.TankTemperature >= 0f)
-									{
-										____temperature += gasTankStorage.TankTemperature;
-										____sensors++;
-									}
+									____temperature += gasTankStorage.TankTemperature;
+									____sensors++;
 								}
-								int count4 = __instance.Structures.Count;
-								while (count4-- > 0)
+							}
+							int count4 = __instance.Structures.Count;
+							while (count4-- > 0)
+							{
+								Structure structure = __instance.Structures[count4];
+								if (structure && __instance.ParentComputer != null && __instance.ParentComputer.DataCableNetwork != null && structure.InternalAtmosphere != null && structure.InternalAtmosphere.Temperature >= 0f)
 								{
-									Structure structure = __instance.Structures[count4];
-									if (structure && __instance.ParentComputer != null && __instance.ParentComputer.DataCableNetwork != null && structure.InternalAtmosphere != null && structure.InternalAtmosphere.Temperature >= 0f)
-									{
-										____temperature += structure.InternalAtmosphere.Temperature;
-										____sensors++;
-									}
+									____temperature += structure.InternalAtmosphere.Temperature;
+									____sensors++;
 								}
-								____temperature /= (float)____sensors;
-								if (float.IsNaN(____temperature))
+							}
+							____temperature /= (float)____sensors;
+							if (float.IsNaN(____temperature))
+							{
+								____displayText = "NAN";
+								if (!____notANumber)
 								{
-									____displayText = "NAN";
-									if (!____notANumber)
+									____notANumber = true;
+									var error_check = (UniTaskVoid)errorCheckFromThread.Invoke(__instance, null);
+									error_check.Forget();
+								}
+							}
+							else
+							{
+								string format = "F1";
+								if (__instance.DisplayUnits.text == "K")
+								{
+									if (____temperature >= 1000f)
 									{
-										____notANumber = true;
-										var error_check = (UniTaskVoid)errorCheckFromThread.Invoke(__instance, null);
-										error_check.Forget();
+										format = "F0";
 									}
+									____displayText = ____temperature.ToString(format);
 								}
 								else
 								{
-									string format = "F1";
-									if (__instance.DisplayUnits.text == "K")
+									float num = ____temperature - 273.15f;
+									if (num >= 1000f)
 									{
-										if (____temperature >= 1000f)
-										{
-											format = "F0";
-										}
-										____displayText = ____temperature.ToString(format);
+										format = "F0";
 									}
-									else
-									{
-										float num = ____temperature - 273.15f;
-										if (num >= 1000f)
-										{
-											format = "F0";
-										}
-										____displayText = ((____temperature <= 1f) ? "-" : num.ToString(format));
-									}
-									if (____notANumber)
-									{
-										____notANumber = false;
-										var error_check = (UniTaskVoid)errorCheckFromThread.Invoke(__instance, null);
-										error_check.Forget();
-									}
+									____displayText = ((____temperature <= 1f) ? "-" : num.ToString(format));
+								}
+								if (____notANumber)
+								{
+									____notANumber = false;
+									var error_check = (UniTaskVoid)errorCheckFromThread.Invoke(__instance, null);
+									error_check.Forget();
 								}
 							}
-						}
-						else
+						} 
+						else 
 						{
 							____pressure = 0f;
 							int count5 = __instance.GasSensors.Count;
