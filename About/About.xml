@@ -30,6 +30,7 @@ Adds a mode to the gas display console to display temperature in Kelvin
     [*]Initial release
     [/list]
   </ChangeLog>
+  <WorkshopHandle>3313480159</WorkshopHandle>
   <!-- StationeersMods and BepInEx tags for Steam workshop page will be automatically added by the framework when publishing -->
   <Tags>
     <Tag>StationeersMods</Tag>
