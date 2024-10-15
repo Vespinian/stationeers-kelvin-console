@@ -15,6 +15,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using Cysharp.Threading.Tasks;
 using Cysharp.Threading.Tasks.CompilerServices;
+using Assets.Scripts.Atmospherics;
 
 namespace ExamplePatchMod
 {
@@ -107,7 +108,7 @@ namespace ExamplePatchMod
 			return instance.LinkedDevices;
 		}
 
-		static bool Prefix(GasDisplay __instance, ref float ____temperature, ref float ____pressure, ref int ____sensors, ref string ____displayText, ref bool ____notANumber, ref float ____displayPressure)
+		static bool Prefix(GasDisplay __instance, ref TemperatureKelvin ____temperature, ref PressurekPa ____pressure, ref int ____sensors, ref string ____displayText, ref bool ____notANumber, ref float ____displayPressure)
 		{
 			var shouldDraw = AccessTools.Method(typeof(GasDisplay), "ShouldDraw");
 			var errorCheckFromThread = AccessTools.Method(typeof(GasDisplay), "ErrorCheckFromThread");
@@ -132,12 +133,12 @@ namespace ExamplePatchMod
 						GasDisplayMode displayMode = __instance.DisplayMode;
 						if (displayMode == GasDisplayMode.Temperature)
 						{
-							____temperature = 0f;
+							____temperature = TemperatureKelvin.Zero;
 							int count = __instance.GasSensors.Count;
 							while (count-- > 0)
 							{
 								GasSensor gasSensor = __instance.GasSensors[count];
-								if (gasSensor && __instance.ParentComputer != null && __instance.ParentComputer.DataCableNetwork != null && __instance.IsDeviceConnected(gasSensor) && gasSensor.AirTemperature >= 0f)
+								if (gasSensor && __instance.ParentComputer != null && __instance.ParentComputer.DataCableNetwork != null && __instance.IsDeviceConnected(gasSensor) && gasSensor.AirTemperature.ToFloat() >= 0f)
 								{
 									____temperature += gasSensor.AirTemperature;
 									____sensors++;
@@ -147,7 +148,7 @@ namespace ExamplePatchMod
 							while (count2-- > 0)
 							{
 								PipeAnalysizer pipeAnalysizer = __instance.PipeAnalysizers[count2];
-								if (pipeAnalysizer && __instance.ParentComputer != null && __instance.ParentComputer.DataCableNetwork != null && __instance.IsDeviceConnected(pipeAnalysizer) && pipeAnalysizer.PipeTemperature >= 0f)
+								if (pipeAnalysizer && __instance.ParentComputer != null && __instance.ParentComputer.DataCableNetwork != null && __instance.IsDeviceConnected(pipeAnalysizer) && pipeAnalysizer.PipeTemperature.ToFloat() >= 0f)
 								{
 									____temperature += pipeAnalysizer.PipeTemperature;
 									____sensors++;
@@ -157,7 +158,7 @@ namespace ExamplePatchMod
 							while (count3-- > 0)
 							{
 								GasTankStorage gasTankStorage = __instance.GasTankStorages[count3];
-								if (gasTankStorage && __instance.ParentComputer != null && __instance.ParentComputer.DataCableNetwork != null && __instance.IsDeviceConnected(gasTankStorage) && gasTankStorage.TankTemperature >= 0f)
+								if (gasTankStorage && __instance.ParentComputer != null && __instance.ParentComputer.DataCableNetwork != null && __instance.IsDeviceConnected(gasTankStorage) && gasTankStorage.TankTemperature.ToFloat() >= 0f)
 								{
 									____temperature += gasTankStorage.TankTemperature;
 									____sensors++;
@@ -167,59 +168,46 @@ namespace ExamplePatchMod
 							while (count4-- > 0)
 							{
 								Structure structure = __instance.Structures[count4];
-								if (structure && __instance.ParentComputer != null && __instance.ParentComputer.DataCableNetwork != null && structure.InternalAtmosphere != null && structure.InternalAtmosphere.Temperature >= 0f)
+								if (structure && __instance.ParentComputer != null && __instance.ParentComputer.DataCableNetwork != null && structure.InternalAtmosphere != null && structure.InternalAtmosphere.Temperature.ToFloat() >= 0f)
 								{
 									____temperature += structure.InternalAtmosphere.Temperature;
 									____sensors++;
 								}
 							}
 							____temperature /= (float)____sensors;
-							if (float.IsNaN(____temperature))
+							string format = "F1";
+							if (__instance.DisplayUnits.text == "K")
 							{
-								____displayText = "NAN";
-								if (!____notANumber)
+								if (____temperature.ToFloat() >= 1000f)
 								{
-									____notANumber = true;
-									var error_check = (UniTaskVoid)errorCheckFromThread.Invoke(__instance, null);
-									error_check.Forget();
+									format = "F0";
 								}
+								____displayText = ____temperature.ToFloat().ToString(format);
 							}
 							else
 							{
-								string format = "F1";
-								if (__instance.DisplayUnits.text == "K")
+								float num = ____temperature.ToFloat() - 273.15f;
+								if (num >= 1000f)
 								{
-									if (____temperature >= 1000f)
-									{
-										format = "F0";
-									}
-									____displayText = ____temperature.ToString(format);
+									format = "F0";
 								}
-								else
-								{
-									float num = ____temperature - 273.15f;
-									if (num >= 1000f)
-									{
-										format = "F0";
-									}
-									____displayText = ((____temperature <= 1f) ? "-" : num.ToString(format));
-								}
-								if (____notANumber)
-								{
-									____notANumber = false;
-									var error_check = (UniTaskVoid)errorCheckFromThread.Invoke(__instance, null);
-									error_check.Forget();
-								}
+								____displayText = ((____temperature.ToFloat() <= 1f) ? "-" : num.ToString(format));
+							}
+							if (____notANumber)
+							{
+								____notANumber = false;
+								var error_check = (UniTaskVoid)errorCheckFromThread.Invoke(__instance, null);
+								error_check.Forget();
 							}
 						} 
 						else 
 						{
-							____pressure = 0f;
+							____pressure = PressurekPa.Zero;
 							int count5 = __instance.GasSensors.Count;
 							while (count5-- > 0)
 							{
 								GasSensor gasSensor2 = __instance.GasSensors[count5];
-								if (gasSensor2 && __instance.ParentComputer != null && __instance.ParentComputer.DataCableNetwork != null && __instance.IsDeviceConnected(gasSensor2) && gasSensor2.AirPressure >= 0f)
+								if (gasSensor2 && __instance.ParentComputer != null && __instance.ParentComputer.DataCableNetwork != null && __instance.IsDeviceConnected(gasSensor2) && gasSensor2.AirPressure.ToFloat() >= 0f)
 								{
 									____pressure += gasSensor2.AirPressure;
 									____sensors++;
@@ -229,7 +217,7 @@ namespace ExamplePatchMod
 							while (count6-- > 0)
 							{
 								PipeAnalysizer pipeAnalysizer2 = __instance.PipeAnalysizers[count6];
-								if (pipeAnalysizer2 && __instance.ParentComputer != null && __instance.ParentComputer.DataCableNetwork != null && __instance.IsDeviceConnected(pipeAnalysizer2) && pipeAnalysizer2.PipePressure >= 0f)
+								if (pipeAnalysizer2 && __instance.ParentComputer != null && __instance.ParentComputer.DataCableNetwork != null && __instance.IsDeviceConnected(pipeAnalysizer2) && pipeAnalysizer2.PipePressure.ToFloat() >= 0f)
 								{
 									____pressure += pipeAnalysizer2.PipePressure;
 									____sensors++;
@@ -239,7 +227,7 @@ namespace ExamplePatchMod
 							while (count7-- > 0)
 							{
 								GasTankStorage gasTankStorage2 = __instance.GasTankStorages[count7];
-								if (gasTankStorage2 && __instance.ParentComputer != null && __instance.ParentComputer.DataCableNetwork != null && __instance.IsDeviceConnected(gasTankStorage2) && gasTankStorage2.TankPressure >= 0f)
+								if (gasTankStorage2 && __instance.ParentComputer != null && __instance.ParentComputer.DataCableNetwork != null && __instance.IsDeviceConnected(gasTankStorage2) && gasTankStorage2.TankPressure.ToFloat() >= 0f)
 								{
 									____pressure += gasTankStorage2.TankPressure;
 									____sensors++;
@@ -251,31 +239,18 @@ namespace ExamplePatchMod
 								Structure structure2 = __instance.Structures[count8];
 								if (!(structure2 == null) && __instance.ParentComputer != null && __instance.ParentComputer.DataCableNetwork != null && structure2.InternalAtmosphere != null && structure2.InternalAtmosphere.PressureGassesAndLiquidsInPa >= 0f)
 								{
-									____pressure += (structure2.InternalAtmosphere.PressureGassesAndLiquidsInPa/1000);
+									____pressure += (structure2.InternalAtmosphere.PressureGassesAndLiquids);
 									____sensors++;
 								}
 							}
 							____pressure /= (float)____sensors;
-							if (float.IsNaN(____pressure))
+							____displayPressure = Mathf.Lerp(____displayPressure, ____pressure.ToFloat(), __instance.LerpSpeed);
+							____displayText = __instance.FormatDisplayPressure(____displayPressure);
+							if (____notANumber)
 							{
-								____displayText = "NAN";
-								if (!____notANumber)
-								{
-									____notANumber = true;
-									var error_check = (UniTaskVoid)errorCheckFromThread.Invoke(__instance, null);
-									error_check.Forget();
-								}
-							}
-							else
-							{
-								____displayPressure = Mathf.Lerp(____displayPressure, ____pressure, __instance.LerpSpeed);
-								____displayText = __instance.FormatDisplayPressure(____displayPressure);
-								if (____notANumber)
-								{
-									____notANumber = false;
-									var error_check = (UniTaskVoid)errorCheckFromThread.Invoke(__instance, null);
-									error_check.Forget();
-								}
+								____notANumber = false;
+								var error_check = (UniTaskVoid)errorCheckFromThread.Invoke(__instance, null);
+								error_check.Forget();
 							}
 						}
 					}
